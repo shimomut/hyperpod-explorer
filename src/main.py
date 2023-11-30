@@ -1,10 +1,54 @@
+import time
+
 from rich.syntax import Syntax
 from rich.traceback import Traceback
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, VerticalScroll
 from textual.reactive import var
-from textual.widgets import Tree, Footer, Header, Static
+from textual.widgets import Tree, Markdown, Footer, Header, Static
+
+EXAMPLE_MARKDOWN = """\
+# Markdown Document
+
+This is an example of Textual's `Markdown` widget.
+
+## Features
+
+Markdown syntax and extensions are supported.
+
+- Typography *emphasis*, **strong**, `inline code` etc.
+- Headers
+- Lists (bullet and ordered)
+- Syntax highlighted code blocks
+- Tables!
+"""
+
+EXAMPLE_MARKDOWN2 = """\
+| Month    | Savings |
+| -------- | ------- |
+| January  | $250    |
+| February | $80     |
+| March    | $420    |
+| January  | $250    |
+| February | $80     |
+| March    | $420    |
+| January  | $250    |
+| February | $80     |
+| March    | $420    |
+| January  | $250    |
+| February | $80     |
+| March    | $420    |
+| January  | $250    |
+| February | $80     |
+| March    | $420    |
+| January  | $250    |
+| February | $80     |
+| March    | $420    |
+| January  | $250    |
+| February | $80     |
+| March    | $420    |
+"""
 
 
 class HyperPodExplorer(App):
@@ -33,8 +77,12 @@ class HyperPodExplorer(App):
             characters.add_leaf("Chani")
             yield tree
 
-            with VerticalScroll(id="code-view"):
-                yield Static(id="code", expand=True)
+            #with VerticalScroll(id="code-view"):
+            #    yield Static(id="code", expand=True)
+
+            with VerticalScroll(id="right-pane"):
+                yield Markdown(markdown=EXAMPLE_MARKDOWN, id="details")
+
         yield Footer()
 
     def on_mount(self) -> None:
@@ -42,18 +90,11 @@ class HyperPodExplorer(App):
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         event.stop()
-        code_view = self.query_one("#code", Static)
+        details_view = self.query_one("#details", Markdown)
 
-        syntax = Syntax.from_path(
-            "main.py",
-            line_numbers=True,
-            word_wrap=False,
-            indent_guides=True,
-            theme="github-dark",
-        )
+        details_view.update(markdown=EXAMPLE_MARKDOWN2)
 
-        code_view.update(syntax)
-        self.query_one("#code-view").scroll_home(animate=False)
+        self.query_one("#right-pane").scroll_home(animate=False)
         self.sub_title = str(id(event))
 
     def action_toggle_tree_pane(self) -> None:
@@ -61,4 +102,9 @@ class HyperPodExplorer(App):
 
 
 if __name__ == "__main__":
+    HyperPodExplorer().run()
+
+    print("re-enter test")
+    time.sleep(10)
+
     HyperPodExplorer().run()
