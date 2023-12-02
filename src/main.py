@@ -1,4 +1,5 @@
 import json
+import time
 import subprocess
 
 from rich.syntax import Syntax
@@ -27,6 +28,20 @@ Markdown syntax and extensions are supported.
 - Syntax highlighted code blocks
 - Tables!
 """
+
+
+class SuspendTui:
+    
+    def __init__(self, app):
+        self.app = app
+    
+    def __enter__(self):
+        self.app._driver.stop_application_mode()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.app.refresh()
+        self.app._driver.start_application_mode()
 
 
 class HyperPodClient:
@@ -172,8 +187,10 @@ class HyperPodExplorer(App):
 
         self.log("on_markdown_link_clicked",event.href)
 
-        self.run_subprocess( ["aws", "ssm", "start-session", "--target", "sagemaker-cluster:ycml5hterpsx_controller-machine-i-0a88597a09d8a6552"] )
-        
+        with SuspendTui(self):
+            #subprocess.run( ["aws", "ssm", "start-session", "--target", "sagemaker-cluster:ycml5hterpsx_controller-machine-i-0a88597a09d8a6552"] )
+            subprocess.run( ["python", "src/cwlog.py"] )
+
     def action_toggle_tree_pane(self) -> None:
         self.show_tree = not self.show_tree
 
@@ -278,23 +295,18 @@ class HyperPodExplorer(App):
             lines.append(f"{line}")
         lines.append( f"```" )
 
-        lines.append( f"#### Session" )
+        lines.append( f"#### SSM session" )
 
-        lines.append( f"- SSM" )
+        #lines.append( f"- SSM" )
         lines.append( f"  - Session target : {ssm_target}" )
         lines.append( f"  - [Connect](https://us-west-2.console.aws.amazon.com/systems-manager/fleet-manager/managed-nodes?region=us-west-2)" )
 
+        lines.append( f"#### CloudWatch Log" )
+        lines.append( f"  - Log group : {ssm_target}" )
+        lines.append( f"  - Log stream : {ssm_target}" )
+        lines.append( f"  - [View provisionin log](https://us-west-2.console.aws.amazon.com/systems-manager/fleet-manager/managed-nodes?region=us-west-2)" )
 
         return "\n".join(lines)
-
-    def run_subprocess(self, cmd):
-
-        self._driver.stop_application_mode()
-        try:
-            subprocess.run(cmd)
-        finally:
-            self.refresh()
-            self._driver.start_application_mode()
 
 
 if __name__ == "__main__":
