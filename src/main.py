@@ -1,4 +1,5 @@
 import json
+import subprocess
 
 from rich.syntax import Syntax
 from rich.traceback import Traceback
@@ -171,6 +172,8 @@ class HyperPodExplorer(App):
 
         self.log("on_markdown_link_clicked",event.href)
 
+        self.run_subprocess( ["aws", "ssm", "start-session", "--target", "sagemaker-cluster:ycml5hterpsx_controller-machine-i-0a88597a09d8a6552"] )
+        
     def action_toggle_tree_pane(self) -> None:
         self.show_tree = not self.show_tree
 
@@ -247,8 +250,12 @@ class HyperPodExplorer(App):
 
         instance_id = node["InstanceId"]
         instance_type = node["InstanceType"]
+        instance_group_name = node["InstanceGroupName"]
         instance_status = node["InstanceStatus"]["Status"]
         message = node["InstanceStatus"]["Message"]
+
+        cluster_id = "aaaaa"
+        ssm_target = f"sagemaker-cluster:{cluster_id}_{instance_group_name}-{instance_id}"
 
         lines = []
         
@@ -271,7 +278,23 @@ class HyperPodExplorer(App):
             lines.append(f"{line}")
         lines.append( f"```" )
 
+        lines.append( f"#### Session" )
+
+        lines.append( f"- SSM" )
+        lines.append( f"  - Session target : {ssm_target}" )
+        lines.append( f"  - [Connect](https://us-west-2.console.aws.amazon.com/systems-manager/fleet-manager/managed-nodes?region=us-west-2)" )
+
+
         return "\n".join(lines)
+
+    def run_subprocess(self, cmd):
+
+        self._driver.stop_application_mode()
+        try:
+            subprocess.run(cmd)
+        finally:
+            self.refresh()
+            self._driver.start_application_mode()
 
 
 if __name__ == "__main__":
