@@ -11,7 +11,7 @@ from textual.widgets import Tree, Markdown, Footer, Header, Static
 import boto3
 
 
-EXAMPLE_MARKDOWN = """\
+EXAMPLE_MARKDOWN1 = """
 # Markdown Document
 
 This is an example of Textual's `Markdown` widget.
@@ -27,7 +27,7 @@ Markdown syntax and extensions are supported.
 - Tables!
 """
 
-EXAMPLE_MARKDOWN2 = """\
+EXAMPLE_MARKDOWN2 = """
 | Month    | Savings |
 | -------- | ------- |
 | January  | $250    |
@@ -51,6 +51,10 @@ EXAMPLE_MARKDOWN2 = """\
 | January  | $250    |
 | February | $80     |
 | March    | $420    |
+"""
+
+EXAMPLE_MARKDOWN3 = """
+Hyperlink test [link](https://www.google.com/)
 """
 
 
@@ -108,9 +112,7 @@ class HyperPodClient:
             if "NextToken" not in response or not response["NextToken"]:
                 break
 
-        return nodes
-
-        
+        return nodes        
 
 
 class HyperPodExplorer(App):
@@ -144,25 +146,22 @@ class HyperPodExplorer(App):
                 nodes = self.hyperpod_client.list_cluster_nodes(cluster["ClusterName"])
 
                 tree_item_cluster = tree.root.add(cluster["ClusterName"], expand=False)
-                tree_item_cluster.data = cluster
+                tree_item_cluster.boto3_data = {"Cluster":cluster}
 
                 for instance_group in cluster["InstanceGroups"]:
                     instance_group_name = instance_group["InstanceGroupName"]
                     tree_item_instance_group = tree_item_cluster.add(instance_group_name, expand=False)
-                    tree_item_instance_group.data = tree_item_instance_group
+                    tree_item_instance_group.boto3_data = {"InstanceGroup":instance_group}
 
                     for node in nodes[instance_group_name]:
                         node_id = node["InstanceId"]
                         tree_item_node = tree_item_instance_group.add_leaf(node_id)
-                        tree_item_node.data = node
+                        tree_item_node.boto3_data = {"ClusterNode":node}
 
             yield tree
 
-            #with VerticalScroll(id="code-view"):
-            #    yield Static(id="code", expand=True)
-
             with VerticalScroll(id="right-pane"):
-                yield Markdown(markdown=EXAMPLE_MARKDOWN, id="details")
+                yield Markdown(markdown=EXAMPLE_MARKDOWN1, id="details")
 
         yield Footer()
 
@@ -170,13 +169,44 @@ class HyperPodExplorer(App):
         self.query_one(Tree).focus()
 
     def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+
         event.stop()
-        details_view = self.query_one("#details", Markdown)
 
-        details_view.update(markdown=EXAMPLE_MARKDOWN2)
+        boto3_data = event.node.boto3_data
 
-        self.query_one("#right-pane").scroll_home(animate=False)
-        self.sub_title = str(id(event))
+        if "Cluster" in boto3_data:
+
+            details_view = self.query_one("#details", Markdown)
+
+            details_view.update(markdown=EXAMPLE_MARKDOWN1)
+
+            self.query_one("#right-pane").scroll_home(animate=False)
+            self.sub_title = str(id(event))
+
+        elif "InstanceGroup" in boto3_data:
+
+            details_view = self.query_one("#details", Markdown)
+
+            details_view.update(markdown=EXAMPLE_MARKDOWN2)
+
+            self.query_one("#right-pane").scroll_home(animate=False)
+            self.sub_title = str(id(event))
+
+
+        elif "ClusterNode" in boto3_data:
+
+            details_view = self.query_one("#details", Markdown)
+
+            details_view.update(markdown=EXAMPLE_MARKDOWN3)
+
+            self.query_one("#right-pane").scroll_home(animate=False)
+            self.sub_title = str(id(event))
+
+    def on_markdown_link_clicked(self, event: Markdown.LinkClicked) -> None:
+
+        event.stop()
+
+        self.log("on_markdown_link_clicked",event.href)
 
     def action_toggle_tree_pane(self) -> None:
         self.show_tree = not self.show_tree
