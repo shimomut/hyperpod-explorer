@@ -24,6 +24,7 @@
     ```
     pip install textual
     pip install textual-dev
+    pip install boto3
     ```
 
 ## How to run
