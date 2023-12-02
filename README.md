@@ -37,5 +37,15 @@
 1. Run
 
     ```
-    python main.py
+    make run
+    ```
+
+1. Run with dev console
+
+    ```
+    make console
+    ```
+
+    ```
+    make dev-run
     ```
