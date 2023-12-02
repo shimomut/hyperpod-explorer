@@ -27,36 +27,6 @@ Markdown syntax and extensions are supported.
 - Tables!
 """
 
-EXAMPLE_MARKDOWN2 = """
-| Month    | Savings |
-| -------- | ------- |
-| January  | $250    |
-| February | $80     |
-| March    | $420    |
-| January  | $250    |
-| February | $80     |
-| March    | $420    |
-| January  | $250    |
-| February | $80     |
-| March    | $420    |
-| January  | $250    |
-| February | $80     |
-| March    | $420    |
-| January  | $250    |
-| February | $80     |
-| March    | $420    |
-| January  | $250    |
-| February | $80     |
-| March    | $420    |
-| January  | $250    |
-| February | $80     |
-| March    | $420    |
-"""
-
-EXAMPLE_MARKDOWN3 = """
-Hyperlink test [link](https://www.google.com/)
-"""
-
 
 class HyperPodClient:
 
@@ -187,7 +157,8 @@ class HyperPodExplorer(App):
             details_view.update(markdown=markdown)
 
         elif "ClusterNode" in boto3_data:
-            details_view.update(markdown=EXAMPLE_MARKDOWN3)
+            markdown = self.format_node_markdown( boto3_data["ClusterNode"] )
+            details_view.update(markdown=markdown)
         
         else:
             return
@@ -224,17 +195,17 @@ class HyperPodExplorer(App):
         lines.append( f"| Arn | {arn} |" )
 
         if cluster_status=="Failed":
+            message = json.loads(cluster["FailureMessage"]["errorMessage"])
+        else:
+            message = "(empty)"
 
-            message = json.loads(cluster["FailureMessage"])
-
-            lines.append( f"#### Failure message" )
-            lines.append( f"```" )
-            for line in message["errorMessage"].splitlines():
-                print(f"{line}")
-            lines.append( f"```" )
+        lines.append( f"#### Message" )
+        lines.append( f"```" )
+        for line in message.splitlines():
+            lines.append(f"{line}")
+        lines.append( f"```" )
 
         return "\n".join(lines)
-
 
     def format_instance_group_markdown(self, instance_group):
 
@@ -269,6 +240,36 @@ class HyperPodExplorer(App):
         lines.append( f"| ---- | ----- |" )
         lines.append( f"| S3 Uri | {lcc_s3_uri} |" )
         lines.append( f"| Creation script | {creatation_script} |" )
+
+        return "\n".join(lines)
+
+    def format_node_markdown(self, node):
+
+        instance_id = node["InstanceId"]
+        instance_type = node["InstanceType"]
+        instance_status = node["InstanceStatus"]["Status"]
+        message = node["InstanceStatus"]["Message"]
+
+        lines = []
+        
+        lines.append( f"## Node - [{instance_id}]" )
+
+        lines.append( f"#### Status" )
+
+        lines.append( f"| Name | Value |" )
+        lines.append( f"| ---- | ----- |" )
+        lines.append( f"| Instance ID | {instance_id} |" )
+        lines.append( f"| Type | {instance_type} |" )
+        lines.append( f"| Status | {instance_status} |" )
+
+        if not message:
+            message = "(empty)"
+
+        lines.append( f"#### Message" )
+        lines.append( f"```" )
+        for line in message.splitlines():
+            lines.append(f"{line}")
+        lines.append( f"```" )
 
         return "\n".join(lines)
 
