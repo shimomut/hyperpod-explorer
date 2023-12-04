@@ -141,10 +141,11 @@ class HyperPodExplorer(App):
                     tree_item_instance_group = tree_item_cluster.add(instance_group_name, expand=False)
                     tree_item_instance_group.boto3_data = {"InstanceGroup":instance_group}
 
-                    for node in nodes[instance_group_name]:
-                        node_id = node["InstanceId"]
-                        tree_item_node = tree_item_instance_group.add_leaf(node_id)
-                        tree_item_node.boto3_data = {"ClusterNode":node}
+                    if instance_group_name in nodes:
+                        for node in nodes[instance_group_name]:
+                            node_id = node["InstanceId"]
+                            tree_item_node = tree_item_instance_group.add_leaf(node_id)
+                            tree_item_node.boto3_data = {"ClusterNode":node}
 
             yield tree
 
@@ -215,7 +216,7 @@ class HyperPodExplorer(App):
         lines.append( f"| Arn | {arn} |" )
 
         if cluster_status=="Failed":
-            message = json.loads(cluster["FailureMessage"]["errorMessage"])
+            message = cluster["FailureMessage"]
         else:
             message = "(empty)"
 
