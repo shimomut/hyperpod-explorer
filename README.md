@@ -1,8 +1,20 @@
-# SageMaker HyperPod TUI based explorer (WIP)
+# HyperPod TUI based explorer (WIP)
 
 ## Overview
 
-(WIP)
+**HyperPod Explorer** is a TUI (Terminal User Interface) based application to browse and manipulate your clusters on [AWS SageMaker HyperPod](https://aws.amazon.com/sagemaker/hyperpod/).
+
+You can access your clusters / instance groups / instances in your clusters in tree structure, see statuses, and login to instances in intuitive manner.
+
+- Intuitive operation with keyboard and mouse.
+- Runs just about terminal emulation environment (including VS Code terminal)
+- Cross platform - Windows / MacOS / Linux
+- Browse HyperPod clusters / instance groups / instances in your AWS account.
+- Quickly check statuses of your cluster instances.
+- Quickly open SSM sessions to your cluster instances.
+- Quickly view CloudWatch Logs about your instances to troubleshoot provisioning issues.
+
+![image info](./doc/images/screenshot1.png)
 
 
 ## How to install dependencies
@@ -19,7 +31,7 @@
     source .venv/bin/activate
     ```
 
-1. Install textual library
+1. Install dependencies
     
     ```
     pip install textual
