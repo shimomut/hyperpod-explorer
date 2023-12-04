@@ -7,7 +7,7 @@
 You can access your clusters / instance groups / instances in your clusters in tree structure, see statuses, and login to instances in intuitive manner.
 
 - Intuitive operation with keyboard and mouse.
-- Runs just about terminal emulation environment (including VS Code terminal)
+- Runs just about all terminal emulation environment (including VS Code terminal)
 - Cross platform - Windows / MacOS / Linux
 - Browse HyperPod clusters / instance groups / instances in your AWS account.
 - Quickly check statuses of your cluster instances.
