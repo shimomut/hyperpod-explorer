@@ -62,3 +62,10 @@ You can access your clusters / instance groups / instances in your clusters in t
     ```
     make dev-run
     ```
+
+## Not implemented yet
+
+- Automatically/manually reload status
+- Lazily get cluster status
+- Open SSM session / CW Logs
+
