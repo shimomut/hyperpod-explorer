@@ -114,6 +114,7 @@ class HyperPodExplorer(App):
 
     def __init__(self,**args):
         super().__init__(**args)
+        self.title = "HyperPod Explorer"
         self.hyperpod_client = HyperPodClient()
 
     def watch_show_tree(self, show_tree: bool) -> None:
@@ -220,6 +221,7 @@ class HyperPodExplorer(App):
         self.log("run_ssm_session")
 
         with SuspendTui(self):
+            subprocess.run( ["clear"] )
             subprocess.run( ["aws", "ssm", "start-session", "--target", ssm_target] )
 
     def run_logs_viewer( self, log_group, stream, start_time ):
@@ -237,6 +239,7 @@ class HyperPodExplorer(App):
                     th.start()
             
                     try:
+                        subprocess.run( ["clear"] )
                         subprocess.run( ["tail", "-f", output_filename] )
                     except KeyboardInterrupt:
                         pass
@@ -295,7 +298,7 @@ class HyperPodExplorer(App):
         lines.append( f"| Creation time | {creation_time_s} |" )
         lines.append( f"| Arn | {data.arn} |" )
 
-        if data.message is not None:
+        if data.message:
             message = data.message
         else:
             message = "(empty)"
@@ -349,7 +352,7 @@ class HyperPodExplorer(App):
         lines.append( f"| Type | {data.instance_type} |" )
         lines.append( f"| Status | {data.instance_status} |" )
 
-        if data.message is not None:
+        if data.message:
             message = data.message
         else:
             message = "(empty)"
