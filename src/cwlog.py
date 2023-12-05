@@ -5,71 +5,62 @@ import threading
 import boto3
 
 
-def monitor_cw_log( log_group_name, log_stream_name, start_time, polling_freq=5, region=None ):
+class CloudWatchLogsStreamDumpThread(threading.Thread):
 
-    print("")
+    def __init__(self, log_group, stream, start_time, polling_freq=5, fd=sys.stdout ):
 
-    class CloudWatchLogsPrintingThread(threading.Thread):
+        super().__init__(daemon=True)
 
-        def __init__(self):
-            super().__init__(daemon=True)
-            self.canceled = False
+        self.canceled = False
+        self.log_group = log_group
+        self.stream = stream
+        self.start_time = start_time
+        self.polling_freq = polling_freq
+        self.fd = fd
 
-        def run(self):
+        print( "CloudWatchLogsStreamDumpThread", [log_group, stream, start_time, polling_freq, fd] )
 
-            logs_client = boto3.client( "logs", region_name=region )
+    def run(self):
 
-            nextToken = None
-            while not self.canceled:
+        logs_client = boto3.client("logs")
 
-                params = {
-                    "logGroupName" : log_group_name,
-                    "logStreamName" : log_stream_name,
-                    "startFromHead" : True,
-                    "limit" : 100,
-                }
+        nextToken = None
+        while not self.canceled:
 
-                if nextToken:
-                    params["nextToken"] = nextToken
-                else:
-                    params["startTime"] = start_time
+            params = {
+                "logGroupName" : self.log_group,
+                "logStreamName" : self.stream,
+                "startFromHead" : True,
+                "limit" : 100,
+            }
 
-                response = logs_client.get_log_events( **params )
+            if nextToken:
+                params["nextToken"] = nextToken
+            else:
+                params["startTime"] = self.start_time
 
-                for event in response["events"]:
+            response = logs_client.get_log_events( **params )
 
-                    if start_time > event["timestamp"]:
-                        continue
+            for event in response["events"]:
 
-                    message = event["message"]
-                    message = message.replace( "\0", "\\0" )
-                    print( message )
+                if self.start_time > event["timestamp"]:
+                    continue
 
-                assert "nextForwardToken" in response, "nextForwardToken not found"
+                message = event["message"]
+                message = message.replace( "\0", "\\0" )
+                self.fd.write( message + "\n" )
 
-                if response["nextForwardToken"] != nextToken:
-                    nextToken = response["nextForwardToken"]
-                else:
-                    for i in range( int(polling_freq / 0.1) ):
-                        if self.canceled:
-                            break
-                        time.sleep(0.1)
+            self.fd.flush()
 
-    th = CloudWatchLogsPrintingThread()
-    th.start()
-    
-    while True:
-        c = sys.stdin.read(1)
-        if c in ("q","Q"):
-            th.canceled = True
-            th.join()
-            break
+            assert "nextForwardToken" in response, "nextForwardToken not found"
 
-    print("")
+            if response["nextForwardToken"] != nextToken:
+                nextToken = response["nextForwardToken"]
+            else:
+                for i in range( int(self.polling_freq / 0.1) ):
+                    if self.canceled:
+                        break
+                    time.sleep(0.1)
 
-
-monitor_cw_log(
-    log_group_name = "/aws/sagemaker/Clusters/SampleBase5/ycml5hterpsx",
-    log_stream_name = "LifecycleConfig/controller-machine/i-0a88597a09d8a6552",
-    start_time = int( ( time.time() - 10 * 24* 60 * 60 ) * 1000 ) # 10 days
-)
+    def cancel(self):
+        self.canceled = True
