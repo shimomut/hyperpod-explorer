@@ -16,20 +16,7 @@ from textual.widgets import Tree, Markdown, Footer, Header, Static
 import boto3
 
 import cwlog
-
-
-class SuspendTui:
-    
-    def __init__(self, app):
-        self.app = app
-    
-    def __enter__(self):
-        self.app._driver.stop_application_mode()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.app.refresh()
-        self.app._driver.start_application_mode()
+from misc import SuspendTui
 
 
 class HyperPodClient:
@@ -304,10 +291,8 @@ class HyperPodExplorer(App):
             message = "(empty)"
 
         lines.append( f"#### Message" )
-        lines.append( f"```" )
         for line in message.splitlines():
             lines.append(f"{line}")
-        lines.append( f"```" )
 
         return "\n".join(lines)
 
@@ -358,10 +343,8 @@ class HyperPodExplorer(App):
             message = "(empty)"
 
         lines.append( f"#### Message" )
-        lines.append( f"```" )
         for line in message.splitlines():
             lines.append(f"{line}")
-        lines.append( f"```" )
 
         lines.append( f"#### SSM session" )
         lines.append( f"  - Session target : {data.ssm_target}" )
